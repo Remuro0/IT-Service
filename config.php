@@ -12,11 +12,11 @@ $DB_CONFIG = [
         'type' => 'local'
     ],
     'global' => [
-        'host' => '134.90.167.42',
-        'port' => '10306',
+        'host' => '',
+        'port' => '',
         'dbname' => 'project_Tkachenko',
-        'username' => 'Tkachenko',
-        'password' => 'F6DRi_',
+        'username' => '',
+        'password' => '',
         'type' => 'global'
     ]
 ];
