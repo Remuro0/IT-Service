@@ -3,6 +3,14 @@
  * auth.php — единая точка контроля авторизации
  */
 
+// После require_once 'config.php';
+require_once 'check_db_and_switch.php';
+
+// Проверяем результат
+if (isset($GLOBALS['db_check_result']) && !$GLOBALS['db_check_result']['success']) {
+    die($GLOBALS['db_check_result']['message']);
+}
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }

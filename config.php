@@ -1,6 +1,14 @@
 ﻿<?php
 // config.php — универсальный конфиг для локальной и глобальной БД
 
+// После require_once 'config.php';
+require_once 'check_db_and_switch.php';
+
+// Проверяем результат
+if (isset($GLOBALS['db_check_result']) && !$GLOBALS['db_check_result']['success']) {
+    die($GLOBALS['db_check_result']['message']);
+}
+
 // === Конфигурации ===
 $DB_CONFIG = [
     'local' => [
@@ -12,11 +20,11 @@ $DB_CONFIG = [
         'type' => 'local'
     ],
     'global' => [
-        'host' => '',
-        'port' => '',
+        'host' => '134.90.167.42',
+        'port' => '10306',
         'dbname' => 'project_Tkachenko',
-        'username' => '',
-        'password' => '',
+        'username' => 'Tkachenko',
+        'password' => 'F6DRi_',
         'type' => 'global'
     ]
 ];
@@ -69,6 +77,17 @@ function getDBConnection($mode = null) {
         }
         
         throw new Exception($errorMessage);
+    }
+}
+
+// === Авто-фолбэк при подключении ===
+// Раскомментируйте, если хотите автоматическую проверку при каждом подключении
+
+if (!defined('DB_CHECK_DISABLED')) {
+    require_once __DIR__ . '/check_db_and_switch.php';
+    if (isset($GLOBALS['db_check_result']) && !$GLOBALS['db_check_result']['success']) {
+        // Не прерываем выполнение, но сохраняем ошибку в сессию
+        $_SESSION['db_error'] = $GLOBALS['db_check_result']['message'];
     }
 }
 
