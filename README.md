@@ -26,5 +26,5 @@
 
 1. **Клонируйте репозиторий:**
 ```bash
-git clone https://github.com/Remuro0rvice.git
+git clone https://github.com/Remuro0/IT-Service.git
 cd IT-Service
