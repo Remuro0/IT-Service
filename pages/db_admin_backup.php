@@ -12,6 +12,7 @@ if ($_SESSION['role'] !== 'db_admin') {
 }
 
 require_once '../config.php';
+$pdo = getDBConnection();
 
 // Путь к папке backups — относительно корня проекта
 $backup_dir = __DIR__ . '/../backups/';

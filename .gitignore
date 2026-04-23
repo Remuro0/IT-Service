@@ -1,3 +1,35 @@
 код.txt
-config.php
+config.global.php
 sync_to_global.php
+
+# Конфиги с паролями (НЕ коммитить!)
+config.local.php
+config.global.php
+
+# Логи и кэш
+*.log
+cache/
+tmp/
+
+# Загруженные файлы
+imang/users/*
+!imang/users/.gitkeep
+
+# IDE и редакторы
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ОС
+.DS_Store
+Thumbs.db
+
+# Бэкапы
+*.bak
+*.backup
+*.sql.gz
+
+# Session files
+sessions/

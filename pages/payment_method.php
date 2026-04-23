@@ -3,21 +3,17 @@ session_start();
 require_once '../auth.php';
 requireAuth();
 require_once '../log_action.php';
-
 if ($_SESSION['role'] !== 'user') {
     $_SESSION['message'] = "❌ Доступ запрещён.";
     header("Location: ../index.php");
     exit;
 }
-
 require_once '../config.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['payment_method'])) {
     try {
-        $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-        // Получаем все товары из корзины пользователя
+        $pdo = getDBConnection(); // ✅
+        // Получаем товары из корзины
         $stmt = $pdo->prepare("
             SELECT c.id AS cart_id, c.type, c.service_id, c.package_id,
                    COALESCE(s.price, p.price) AS price
@@ -35,14 +31,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['payment_method'])) {
             exit;
         }
 
-        // Начинаем транзакцию
         $pdo->beginTransaction();
-
-        // Копируем каждый товар в таблицу purchases
+        // Копируем в purchases
         foreach ($items as $item) {
             $stmt_ins = $pdo->prepare("
-                INSERT INTO purchases (user_id, item_type, service_id, package_id, price)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO purchases (user_id, item_type, service_id, package_id, price, purchased_at)
+                VALUES (?, ?, ?, ?, ?, NOW())
             ");
             $stmt_ins->execute([
                 $_SESSION['user_id'],
@@ -52,33 +46,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['payment_method'])) {
                 $item['price']
             ]);
         }
-
-        // Удаляем товары из корзины
+        // Очищаем корзину
         $stmt_del = $pdo->prepare("DELETE FROM cart WHERE user_id = ?");
         $stmt_del->execute([$_SESSION['user_id']]);
-
-        // Обновляем дату последней отправки кода
-        $stmt_upd = $pdo->prepare("UPDATE users SET last_verification_code_sent_at = NOW() WHERE id = ?");
-        $stmt_upd->execute([$_SESSION['user_id']]);
-
-        // Логируем успешную покупку
-        logAction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'PURCHASE_SUCCESS', "Количество товаров: " . count($items));
-
+        // Логируем
+        logAction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'PURCHASE_SUCCESS', "Куплено: " . count($items) . " товаров");
         $pdo->commit();
-
         $_SESSION['message'] = "✅ Покупка успешно оформлена!";
         header("Location: purchased.php");
         exit;
-
     } catch (PDOException $e) {
         $pdo->rollback();
-        $_SESSION['message'] = "❌ Ошибка при оформлении покупки.";
+        $_SESSION['message'] = "❌ Ошибка при оформлении покупки: " . htmlspecialchars($e->getMessage());
         header("Location: cart.php");
         exit;
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -89,24 +73,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['payment_method'])) {
     <link rel="stylesheet" href="../css/payment_method.css">
 </head>
 <body>
-    <!-- Панель пользователя -->
     <div class="user-panel">
-        <img src="<?= htmlspecialchars($_SESSION['avatar'] ?? '../imang/default.png') ?>" alt="Аватарка">
+        <img src="../<?= htmlspecialchars($_SESSION['avatar'] ?? 'imang/default.png') ?>" alt="Аватарка">
         <div class="user-info">
-            <strong><?= htmlspecialchars($_SESSION['username'] ?? 'Пользователь') ?></strong>
+            <strong><?= htmlspecialchars($_SESSION['username']) ?></strong>
         </div>
         <div class="user-menu">
             <a href="user_dashboard.php">Главная</a>
             <a href="cart.php">Корзина</a>
-            <a href="history.php">История</a>
-            <a href="support.php">Поддержка</a>
             <a href="edit_profile.php">Профиль</a>
-            <a href="billing.php">Биллинг</a>
-            <a href="referral.php">Рефералы</a>
             <a href="../logout.php">Выход</a>
         </div>
     </div>
-
     <div class="content-wrapper">
         <div class="payment-box">
             <h2>Выберите способ оплаты</h2>

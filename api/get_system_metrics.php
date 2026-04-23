@@ -1,34 +1,24 @@
 ﻿<?php
-header('Content-Type: application/json');
-session_start();
-require_once '../auth.php';
-requireAuth();
+header('Content-Type: application/json; charset=utf-8');
+header('Access-Control-Allow-Origin: *'); // для локального теста
 
-if ($_SESSION['role'] !== 'admin') {
+session_start();
+
+// Защита: только авторизованные админы
+if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
     http_response_code(403);
     echo json_encode(['error' => 'Доступ запрещён']);
     exit;
 }
 
-// Генерация фальшивых данных в реальном времени
-$labels = [];
-$cpu = [];
-$memory = [];
-$disk = [];
+// 🔢 Генерация одного случайного значения в пределах 10–90
+$metric = rand(10, 90);
 
-for ($i = 19; $i >= 0; $i--) {
-    $time = date('H:i:s', strtotime("-$i seconds"));
-    $labels[] = $time;
-    $cpu[] = rand(10, 90);    // CPU от 10% до 90%
-    $memory[] = rand(20, 85); // Память от 20% до 85%
-    $disk[] = rand(30, 75);   // Диск от 30% до 75%
-}
-
+// ✅ Отправляем JSON
 echo json_encode([
-    'labels' => $labels,
-    'cpu' => $cpu,
-    'memory' => $memory,
-    'disk' => $disk,
-    'source' => 'Данные: симулированные (фальшивые, обновляются в реальном времени)'
+    'metric' => $metric,
+    'min' => 10,
+    'max' => 90,
+    'timestamp' => date('H:i:s')
 ]);
 ?>

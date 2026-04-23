@@ -4,6 +4,7 @@ session_start();
 require_once '../auth.php';
 requireAuth(); // Проверяем авторизацию
 require_once '../config.php';
+$pdo = getDBConnection();
 require_once '../log_action.php';
 
 // Только для db_admin

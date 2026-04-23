@@ -10,6 +10,7 @@ if ($_SESSION['role'] !== 'user') {
 }
 
 require_once '../config.php';
+$pdo = getDBConnection();
 
 $id = (int)($_GET['id'] ?? 0);
 if ($id <= 0) {

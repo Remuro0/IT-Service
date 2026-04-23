@@ -12,6 +12,7 @@ if ($_SESSION['role'] !== 'db_admin') {
 }
 
 require_once '../config.php';
+$pdo = getDBConnection();
 
 $table = $_GET['table'] ?? '';
 $id = (int)($_GET['id'] ?? 0);

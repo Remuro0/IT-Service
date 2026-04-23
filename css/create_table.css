@@ -4,20 +4,20 @@ body {
     color: #e0e0e0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
-    padding: 0;
+    padding: 20px;
     min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
 .form-box {
     background: rgba(30, 25, 45, 0.95);
     padding: 30px;
     border-radius: 12px;
-    width: 600px;
+    width: 95%;
+    max-width: 1600px;
+    margin: 20px auto;
     box-shadow: 0 8px 24px rgba(100, 30, 200, 0.4);
     border: 1px solid rgba(100, 60, 180, 0.3);
+    box-sizing: border-box;
 }
 
 .form-box h2 {
@@ -25,39 +25,76 @@ body {
     color: #c7b8ff;
     margin-top: 0;
     margin-bottom: 20px;
+    font-size: 1.8rem;
 }
 
 .form-box label {
     display: block;
     color: #c7b8ff;
     margin-bottom: 4px;
+    font-size: 0.9rem;
 }
 
 .form-box input,
 .form-box select {
     width: 100%;
-    padding: 12px;
-    margin: 8px 0;
+    padding: 8px 10px;
+    margin: 6px 0;
     border: 1px solid #5a1a8f;
     border-radius: 6px;
     background: #1e192d;
     color: white;
     box-sizing: border-box;
     font-family: monospace;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .column-field {
-    margin: 10px 0;
-    padding: 10px;
+    margin: 12px 0;
+    padding: 15px;
     background: rgba(40, 35, 55, 0.7);
     border-radius: 6px;
+    border: 1px solid rgba(100, 60, 180, 0.2);
+}
+
+/* Сетка для полей столбца - используем flexbox */
+.column-field > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 5px 0;
+    align-items: center;
+}
+
+.column-field input[type="text"],
+.column-field select {
+    flex: 1;
+    min-width: 100px;
+    margin: 0;
+}
+
+/* Поля с фиксированной шириной */
+.column-field input[placeholder*="Длина"],
+.column-field select[name*="null"],
+.column-field select[name*="attributes"],
+.column-field select[name*="collation"],
+.column-field select[name*="default"] {
+    flex: 0 0 auto;
+    min-width: 80px;
+    max-width: 140px;
 }
 
 .data-row {
     display: flex;
-    gap: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
     margin: 5px 0;
+}
+
+.data-row input {
+    flex: 1;
+    min-width: 80px;
+    margin: 0;
 }
 
 .buttons {
@@ -65,10 +102,13 @@ body {
     gap: 10px;
     justify-content: center;
     margin-top: 20px;
+    flex-wrap: wrap;
 }
 
 .buttons button {
     flex: 1;
+    min-width: 150px;
+    max-width: 250px;
     padding: 12px;
     background: linear-gradient(to right, #00c853, #64dd17);
     color: white;
@@ -76,6 +116,7 @@ body {
     border-radius: 6px;
     cursor: pointer;
     font-size: 16px;
+    font-weight: bold;
 }
 
 .buttons button:last-child {
@@ -84,4 +125,66 @@ body {
 
 .buttons button:hover {
     opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+/* Адаптивность для больших экранов */
+@media (min-width: 1200px) {
+    .form-box {
+        width: 98%;
+        padding: 40px;
+    }
+    
+    .column-field {
+        padding: 20px;
+    }
+}
+
+/* Адаптивность для планшетов */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .form-box {
+        width: 100%;
+        padding: 20px;
+        margin: 10px auto;
+    }
+    
+    .form-box h2 {
+        font-size: 1.5rem;
+    }
+    
+    .column-field > div {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .column-field input,
+    .column-field select {
+        width: 100%;
+        min-width: auto;
+        max-width: none;
+    }
+    
+    .buttons {
+        flex-direction: column;
+    }
+    
+    .buttons button {
+        width: 100%;
+        max-width: none;
+    }
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 480px) {
+    .form-box {
+        padding: 15px;
+    }
+    
+    .column-field {
+        padding: 12px;
+    }
 }

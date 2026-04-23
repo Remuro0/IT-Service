@@ -9,6 +9,7 @@ if ($_SESSION['role'] !== 'admin') {
 }
 
 require_once '../config.php';
+$pdo = getDBConnection();
 require_once '../vendor/autoload.php';
 
 try {

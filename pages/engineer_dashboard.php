@@ -2,15 +2,24 @@
 session_start();
 require_once '../auth.php';
 requireAuth();
+// Добавляем эту строку для подключения конфигурации и функции getDBConnection()
+require_once '../config.php';
 
-// Только для инженера
 if ($_SESSION['role'] !== 'engineer') {
     $_SESSION['message'] = "❌ Доступ запрещён.";
     header("Location: ../index.php");
     exit;
 }
 
+// Теперь можно безопасно использовать getDBConnection()
+try {
+    $pdo = getDBConnection(); // ✅ Универсальное подключение
+} catch (Exception $e) {
+    die("Ошибка БД: " . htmlspecialchars($e->getMessage()));
+}
+
 require_once '../config.php';
+$pdo = getDBConnection();
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);

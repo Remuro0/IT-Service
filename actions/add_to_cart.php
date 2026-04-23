@@ -10,6 +10,7 @@ if ($_SESSION['role'] !== 'user') {
 }
 
 require_once '../config.php';
+$pdo = getDBConnection();
 
 $type = $_GET['type'] ?? 'service'; // 'service' или 'package'
 $id = (int)($_GET['id'] ?? 0);

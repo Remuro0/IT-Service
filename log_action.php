@@ -1,6 +1,5 @@
 ﻿<?php
 // log_action.php — единая функция логирования
-
 /**
  * Записывает событие в таблицу logs
  *
@@ -13,11 +12,12 @@
 function logAction($pdo, $userId, $username, $eventType, $message = '') {
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-
+    
     $stmt = $pdo->prepare("
-        INSERT INTO logs (user_id, username, event_type, message, ip_address, user_agent, timestamp)
-        VALUES (?, ?, ?, ?, ?, ?, NOW())
+        INSERT INTO logs (event_type, message, ip_address, user_agent, created_at, source)
+        VALUES (?, ?, ?, ?, NOW(), ?)
     ");
-    $stmt->execute([$userId, $username, $eventType, $message, $ip, $userAgent]);
+    
+    $stmt->execute([$eventType, $message, $ip, $userAgent, $username]);
 }
 ?>

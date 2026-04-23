@@ -11,6 +11,7 @@ if ($_SESSION['role'] !== 'admin') {
 }
 
 require_once '../config.php';
+$pdo = getDBConnection();
 require_once '../log_action.php';
 
 // Путь к папке бэкапов (относительно корня проекта)

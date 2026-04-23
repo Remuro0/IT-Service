@@ -3,6 +3,7 @@ session_start();
 require_once '../auth.php';
 requireAuth();
 
+// 🔒 Только для инженера
 if ($_SESSION['role'] !== 'engineer') {
     $_SESSION['message'] = "❌ Доступ запрещён.";
     header("Location: ../index.php");
@@ -10,21 +11,16 @@ if ($_SESSION['role'] !== 'engineer') {
 }
 
 require_once '../config.php';
-
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
+    $pdo = getDBConnection(); // ✅ Универсальное подключение
     // Загружаем сетевые устройства
     $stmt = $pdo->prepare("SELECT * FROM `network_devices` ORDER BY `name`");
     $stmt->execute();
     $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-} catch (PDOException $e) {
+} catch (Exception $e) {
     die("Ошибка БД: " . htmlspecialchars($e->getMessage()));
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -37,24 +33,23 @@ try {
 <body>
     <!-- Панель пользователя -->
     <div class="user-panel">
-        <img src="<?= htmlspecialchars($_SESSION['avatar'] ?? '../imang/default.png') ?>" alt="Аватарка">
+        <img src="../<?= htmlspecialchars($_SESSION['avatar'] ?? 'imang/default.png') ?>" alt="Аватарка">
         <div class="user-info">
-            <strong><?= htmlspecialchars($_SESSION['username'] ?? 'Инженер') ?></strong><br>
-            <span class="role">Роль: <?= htmlspecialchars($_SESSION['role'] ?? 'user') ?></span>
+            <strong><?= htmlspecialchars($_SESSION['username']) ?></strong><br>
+            <span class="role">Роль: <?= htmlspecialchars($_SESSION['role']) ?></span>
         </div>
         <div class="user-menu">
-            <a href="engineer_dashboard.php">Главная</a>
-            <a href="view_incidents.php">Инциденты</a>
-            <a href="view_servers.php">Серверы</a>
-            <a href="view_network.php">Сеть</a>
-            <a href="edit_profile.php">Профиль</a>
-            <a href="../logout.php">Выход</a>
+            <a href="engineer_dashboard.php">🏠 Главная</a>
+            <a href="view_incidents.php">🚨 Инциденты</a>
+            <a href="view_servers.php">💻 Серверы</a>
+            <a href="view_network.php">🌐 Сеть</a>
+            <a href="edit_profile.php">✏️ Профиль</a>
+            <hr>
+            <a href="../logout.php">🚪 Выйти</a>
         </div>
     </div>
-
     <div class="content-wrapper">
         <h1 style="text-align: center; color: #c7b8ff;">Сетевые устройства</h1>
-
         <div class="table-container">
             <table>
                 <thead>
@@ -80,7 +75,7 @@ try {
                                     <?= htmlspecialchars($device['status']) ?>
                                 </span>
                             </td>
-                            <td><?= date('d.m.Y H:i', strtotime($device['last_checked'])) ?></td>
+                            <td><?= htmlspecialchars($device['last_checked']) ?></td>
                             <td class="actions">
                                 <a href="update_device.php?id=<?= (int)$device['id'] ?>" class="btn-edit">✏️ Обновить</a>
                             </td>

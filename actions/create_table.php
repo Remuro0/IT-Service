@@ -3,6 +3,7 @@ session_start();
 require_once '../auth.php';
 requireAuth();
 require_once '../config.php';
+$pdo = getDBConnection();
 require_once '../log_action.php';
 
 try {

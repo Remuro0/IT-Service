@@ -1,10 +1,20 @@
 ﻿<?php
-// Начало сессии — ОБЯЗАТЕЛЬНО
 session_start();
 require_once '../auth.php';
 requireAuth();
 require_once '../config.php';
+$pdo = getDBConnection();
 require_once '../log_action.php';
+
+// === ИСПРАВЛЕНИЕ: Получаем table и id из URL ===
+$table = $_GET['table'] ?? '';
+$id = (int)($_GET['id'] ?? 0);
+
+if (empty($table) || !$id) {
+    $_SESSION['message'] = "❌ Недопустимые параметры.";
+    header("Location: ../pages/view_db.php");
+    exit;
+}
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
@@ -17,14 +27,20 @@ try {
 $stmt = $pdo->prepare("SHOW TABLES LIKE ?");
 $stmt->execute([$table]);
 if (!$stmt->fetch()) {
-    die("Таблица '$table' не существует.");
+    $_SESSION['message'] = "❌ Таблица '$table' не существует.";
+    header("Location: ../pages/view_db.php");
+    exit;
 }
 
 // Получаем запись
 $stmt = $pdo->prepare("SELECT * FROM `$table` WHERE id = ?");
 $stmt->execute([$id]);
 $record = $stmt->fetch(PDO::FETCH_ASSOC);
-if (!$record) die("Запись не найдена.");
+if (!$record) {
+    $_SESSION['message'] = "❌ Запись не найдена.";
+    header("Location: ../pages/view_db.php");
+    exit;
+}
 
 // Обработка сохранения
 if ($_POST && isset($_POST['action']) && $_POST['action'] === 'update') {
@@ -36,7 +52,7 @@ if ($_POST && isset($_POST['action']) && $_POST['action'] === 'update') {
         if ($field === 'id') continue;
         $set[] = "`$field` = ?";
         $value = $_POST[$field] ?? '';
-        // Хешируем пароль, если поле называется 'password' и не пустое
+        // Хешируем пароль, если поле называется 'password' и значение не пустое
         if ($field === 'password' && $value !== '') {
             $value = password_hash($value, PASSWORD_DEFAULT);
         }

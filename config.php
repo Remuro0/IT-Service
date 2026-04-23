@@ -1,88 +1,88 @@
 ﻿<?php
-// config.php — универсальный конфиг с fallback на глобальную БД
+// config.php — универсальный конфиг для локальной и глобальной БД
 
-// === Локальная БД (по умолчанию) ===
-$config = [
-    'host' => 'localhost',
-    'port' => '3306',
-    'dbname' => 'local',
-    'username' => 'root',
-    'password' => '',
-    'type' => 'local'
+// === Конфигурации ===
+$DB_CONFIG = [
+    'local' => [
+        'host' => 'localhost',
+        'port' => '3306',
+        'dbname' => 'local',
+        'username' => 'root',
+        'password' => '',
+        'type' => 'local'
+    ],
+    'global' => [
+        'host' => '134.90.167.42',
+        'port' => '10306',
+        'dbname' => 'project_Tkachenko',
+        'username' => 'Tkachenko',
+        'password' => 'F6DRi_',
+        'type' => 'global'
+    ]
 ];
 
-// === Глобальная БД (резервная и для синхронизации) ===
-$global_config = [
-    'host' => '134.90.167.42',
-    'port' => '10306',
-    'dbname' => 'project_Tkachenko',
-    'username' => 'Tkachenko',
-    'password' => 'F6DRi_',
-    'type' => 'global'
-];
-
-// === Создаём подключение — с fallback на глобальную, если локальная недоступна ===
-function getDBConnection($for_sync = false) {
-    global $config, $global_config;
-
-    if ($for_sync) {
-        // Явно запрашиваем глобальную — для sync_to_global.php
-        $target = $global_config;
-    } else {
-        // Пробуем локальную; если не получится — глобальную
-        try {
-            $pdo = new PDO(
-                "mysql:host={$config['host']};port={$config['port']};dbname={$config['dbname']};charset=utf8",
-                $config['username'],
-                $config['password'],
-                [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-            );
-            $pdo->query("SELECT 1"); // проверка живости
-            return $pdo;
-        } catch (PDOException $e) {
-            // Локальная недоступна → fallback на глобальную
-            $target = $global_config;
-            $_SESSION['db_fallback'] = true;
-        }
+// === Функция получения подключения ===
+function getDBConnection($mode = null) {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
     }
-
-    // Подключаемся к целевой БД
+    
+    // Определяем режим: параметр → сессия → по умолчанию 'local'
+    $mode = $mode ?? ($_SESSION['db_mode'] ?? 'local');
+    
+    if (!isset($GLOBALS['DB_CONFIG'][$mode])) {
+        $mode = 'local';
+    }
+    
+    $cfg = $GLOBALS['DB_CONFIG'][$mode];
+    
     try {
         $pdo = new PDO(
-            "mysql:host={$target['host']};port={$target['port']};dbname={$target['dbname']};charset=utf8",
-            $target['username'],
-            $target['password'],
+            "mysql:host={$cfg['host']};port={$cfg['port']};dbname={$cfg['dbname']};charset=utf8",
+            $cfg['username'],
+            $cfg['password'],
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
         );
-        if (!$for_sync) {
-            $_SESSION['db_type'] = $target['type'];
-        }
+        
+        $_SESSION['db_mode'] = $mode;
         return $pdo;
+        
     } catch (PDOException $e) {
-        throw new Exception("❌ Ни локальная, ни глобальная БД недоступны: " . $e->getMessage());
+        // 🔍 Детальная информация об ошибке
+        $errorMessage = "❌ Ошибка подключения к БД '$mode':<br><br>";
+        $errorMessage .= "<strong>Хост:</strong> {$cfg['host']}<br>";
+        $errorMessage .= "<strong>Порт:</strong> {$cfg['port']}<br>";
+        $errorMessage .= "<strong>База данных:</strong> {$cfg['dbname']}<br>";
+        $errorMessage .= "<strong>Пользователь:</strong> {$cfg['username']}<br><br>";
+        $errorMessage .= "<strong>Ошибка:</strong> " . $e->getMessage() . "<br><br>";
+        
+        if ($mode === 'local') {
+            $errorMessage .= "<hr><strong>Возможные причины:</strong><br>";
+            $errorMessage .= "1. MySQL не запущен<br>";
+            $errorMessage .= "2. База данных '{$cfg['dbname']}' не существует<br>";
+            $errorMessage .= "3. Неверный порт (попробуйте 3307 вместо 3306)<br>";
+            $errorMessage .= "4. Неверный пароль<br><br>";
+            $errorMessage .= "<strong>Решение:</strong><br>";
+            $errorMessage .= "- Запустите MySQL через XAMPP/OpenServer<br>";
+            $errorMessage .= "- Создайте базу данных: <code>CREATE DATABASE local;</code><br>";
+            $errorMessage .= "- Проверьте порт MySQL в настройках";
+        }
+        
+        throw new Exception($errorMessage);
     }
 }
 
-// === Совместимость: оставляем старые переменные, но как fallback ===
-// (чтобы не ломать старый код вроде `new PDO("host=$host;...")`)
-try {
-    $pdo_check = new PDO("mysql:host={$config['host']};dbname={$config['dbname']};charset=utf8", $config['username'], $config['password']);
-    $pdo_check->query("SELECT 1");
-    $pdo_check = null;
-    // Локальная БД доступна → оставляем старые переменные
-    $host = $config['host'];
-    $dbname = $config['dbname'];
-    $username = $config['username'];
-    $password = $config['password'];
-    $_SESSION['db_type'] = 'local';
-} catch (PDOException $e) {
-    // Локальная недоступна → переключаемся на глобальную
-    $host = $global_config['host'];
-    $port = $global_config['port']; // добавляем порт для совместимости
-    $dbname = $global_config['dbname'];
-    $username = $global_config['username'];
-    $password = $global_config['password'];
-    $_SESSION['db_type'] = 'global';
-    $_SESSION['db_fallback'] = true;
+// === Совместимость со старым кодом (переменные $host, $dbname и т.д.) ===
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
+
+$mode = $_SESSION['db_mode'] ?? 'local';
+$cfg = $DB_CONFIG[$mode];
+
+$host = $cfg['host'];
+$port = $cfg['port'];
+$dbname = $cfg['dbname'];
+$username = $cfg['username'];
+$password = $cfg['password'];
 ?>

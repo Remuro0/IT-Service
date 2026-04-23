@@ -2,27 +2,22 @@
 session_start();
 require_once '../auth.php';
 requireAuth();
-
-// Если пользователь не 'user', перенаправляем на index.php
+// Только для пользователя
 if ($_SESSION['role'] !== 'user') {
     $_SESSION['message'] = "❌ Доступ запрещён.";
     header("Location: ../index.php");
     exit;
 }
-
 require_once '../config.php';
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("Ошибка подключения к БД: " . htmlspecialchars($e->getMessage()));
+    $pdo = getDBConnection(); // ✅ Универсальное подключение
+} catch (Exception $e) {
+    die("Ошибка БД: " . htmlspecialchars($e->getMessage()));
 }
-
 // Загружаем ТОЛЬКО услуги с ценой > 0
 $stmt = $pdo->prepare("SELECT id, name, description, price FROM services WHERE price > 0 ORDER BY sort_order");
 $stmt->execute();
 $services = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 // Загружаем пакеты
 $stmt = $pdo->query("SELECT * FROM tariff_plans ORDER BY sort_order LIMIT 3");
 $packages = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -39,9 +34,9 @@ $packages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <body>
     <!-- Панель пользователя -->
     <div class="user-panel">
-        <img src="<?= htmlspecialchars($_SESSION['avatar'] ?? '../imang/default.png') ?>" alt="Аватарка">
+        <img src="../<?= htmlspecialchars($_SESSION['avatar'] ?? 'imang/default.png') ?>" alt="Аватарка">
         <div class="user-info">
-            <strong><?= htmlspecialchars($_SESSION['username'] ?? 'Пользователь') ?></strong><br>
+            <strong><?= htmlspecialchars($_SESSION['username']) ?></strong><br>
         </div>
         <div class="user-menu">
             <a href="user_dashboard.php">Главная</a>
@@ -56,13 +51,11 @@ $packages = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <a href="../logout.php">Выход</a>
         </div>
     </div>
-
     <div class="content-wrapper">
         <div class="header">
             <h1>Наши услуги</h1>
             <p>Профессиональное управление инфраструктурой, безопасность и поддержка 24/7</p>
         </div>
-
         <div class="services-page">
             <?php if (empty($services)): ?>
                 <div class="no-services">Нет доступных платных услуг.</div>
@@ -79,7 +72,6 @@ $packages = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
             <?php endif; ?>
         </div>
-
         <!-- Пакеты -->
         <div class="packages-section">
             <h2>Наши пакеты</h2>
@@ -105,13 +97,11 @@ $packages = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <?php endforeach; ?>
             </div>
         </div>
-
         <div class="actions">
             <a href="user_dashboard.php" class="btn btn-back">Назад</a>
             <a href="../logout.php" class="btn btn-logout">Выйти</a>
         </div>
     </div>
-
     <?php include '../footer.php'; ?>
 </body>
 </html>
